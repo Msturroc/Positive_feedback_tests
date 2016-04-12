@@ -1,11 +1,11 @@
-simple_positive_feedback <- function(k_1,k_2,k_3,maxtime,timestep,numberofrealisations){
+simple_positive_feedback <- function(k_1,k_2,k_3,maxtime,timestep,numberofrealisations,initial_condition){
 
 output_GFP = matrix(0,nrow=(maxtime/timestep)+1,ncol=numberofrealisations);
 
 for (realisation in seq(1,numberofrealisations,by=1)){
 
 #print(realisation)
-GFP= round(k_1/(k_2-k_3));
+GFP= initial_condition;
 
 a = rep(0,3);
 a[1] = k_1;
