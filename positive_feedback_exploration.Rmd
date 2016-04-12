@@ -2,7 +2,9 @@
 title: "Positive feedback measures"
 author: "Marc"
 date: "10 April 2016"
-output: pdf_document
+output:
+  pdf_document:
+    highlight: tango
 ---
 
 ```{r setup, include=FALSE}
@@ -17,7 +19,7 @@ $$\emptyset \underset{k_2}{\stackrel{k_1}{\rightleftharpoons}} A \underset{k_3}{
 
 where $k_1$ is the birth rate, $k_2$ is the decay rate and $k_3$ is the positive feedback strength. We want to study stochastic realisations of this model using the stochastic simulation algorithm which is implemented in the function "simple_positive_feedback.r", so first we must source the function.
 ```{r function}
-source('~/Positive_feedback_tests/simple_positive_feedback.r')
+source('simple_positive_feedback.r')
 ```
 
 Let's define parameters, run 100 trajectories of the model and obtain the output:
@@ -116,21 +118,34 @@ plot(lag,autocorrelation,main=paste("Half autocorrelation = ", half_autocorr))
 Now we can examine how the half autocorrelation (which is displayed in the title of the previous plot) varies with $k_3$.
 
 ```{r plot 6}
-numberofrealisations = 100;
+numberofrealisations = 10;
+maxlag=5000;
 count1 = 0;
 half_autocorr <- matrix(0,nrow=6,ncol=numberofrealisations);
+
 for (k_3 in seq(0,0.005,by=0.001)){
   count1 = count1 + 1;
+  autocorr <- matrix(0,1,ncol=maxlag);
   for (count2 in seq(1,numberofrealisations,by=1)){
   output = simple_positive_feedback(1,0.01,k_3,1000,0.1,1);
-  autocorr = acf(output,lag.max = 1000,plot = FALSE);
-  test <- min(abs(autocorr$acf-0.5))
-half_autocorr[count1,count2] = which(abs(autocorr$acf-0.5) == test);
+  autocorr1 = acf(output,lag.max = maxlag,plot = FALSE);
+  test <- min(abs(autocorr1$acf-0.5))
+  autocorr=rbind(autocorr,as.vector(autocorr1$acf))
+  half_autocorr[count1,count2] = which(abs(autocorr1$acf-0.5) == test);
+ 
   }
+  if (count1==1){
+  plot(seq(1,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
+  }
+  else{
+lines(seq(1,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
+}
+#lines(lag,autocorrelation,col="green")
 }
 k_3 = seq(0,0.005,by=0.001);
 half_autocorrelation = rowMeans(half_autocorr)
 plot(k_3,half_autocorrelation);
+
 ```
 
 ## Entropy
