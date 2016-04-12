@@ -1,7 +1,6 @@
 simple_positive_feedback <- function(k_1,k_2,k_3,maxtime,timestep,numberofrealisations){
 #caca
   #even more caca
-    ##last caca
 output_GFP = matrix(0,nrow=(maxtime/timestep)+1,ncol=numberofrealisations);
 
 for (realisation in seq(1,numberofrealisations,by=1)){
