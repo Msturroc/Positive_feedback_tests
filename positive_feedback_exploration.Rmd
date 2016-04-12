@@ -25,7 +25,7 @@ source('simple_positive_feedback.r')
 Let's define parameters, run 100 trajectories of the model and obtain the output:
 ```{r parameters}
 k_1 = 1
-k_2 = 0.01;
+k_2 = 0.1;
 k_3 = 0.001;
 maxtime = 1000;
 timestep = 0.1;
@@ -64,9 +64,12 @@ for (k_3 in seq(0,0.005,by=0.001)){
   output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,numberofrealisations);
   temp_mean_A = rowMeans(output);
   mu_A[count] = temp_mean_A[length(temp_mean_A)];
-}
+  if (count==1){plot(seq(0,maxtime,timestep),t(rowMeans(output)),type='l',col=count)}
+{lines(seq(0,maxtime,timestep),t(rowMeans(output)),type='l',col=count)}
+  }
 k_3 = seq(0,0.005,by=0.001);
-plot(k_3,mu_A);
+#plot(k_3,mu_A);
+
 ```
 
 We can see that the mean value increases with positive feedback strength. The next measure we will inspect is the noise of $A$, specifically the Fano Factor. 
@@ -118,14 +121,14 @@ plot(lag,autocorrelation,main=paste("Half autocorrelation = ", half_autocorr))
 Now we can examine how the half autocorrelation (which is displayed in the title of the previous plot) varies with $k_3$.
 
 ```{r plot 6}
-numberofrealisations = 10;
+warningnumberofrealisations = 10;
 maxlag=5000;
 count1 = 0;
 half_autocorr <- matrix(0,nrow=6,ncol=numberofrealisations);
 
 for (k_3 in seq(0,0.005,by=0.001)){
   count1 = count1 + 1;
-  autocorr <- matrix(0,1,ncol=maxlag);
+  autocorr <- matrix(0,1,ncol=maxlag+1);
   for (count2 in seq(1,numberofrealisations,by=1)){
   output = simple_positive_feedback(1,0.01,k_3,1000,0.1,1);
   autocorr1 = acf(output,lag.max = maxlag,plot = FALSE);
@@ -135,16 +138,16 @@ for (k_3 in seq(0,0.005,by=0.001)){
  
   }
   if (count1==1){
-  plot(seq(1,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
+  plot(seq(0,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
   }
   else{
-lines(seq(1,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
+lines(seq(0,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
 }
 #lines(lag,autocorrelation,col="green")
 }
 k_3 = seq(0,0.005,by=0.001);
 half_autocorrelation = rowMeans(half_autocorr)
-plot(k_3,half_autocorrelation);
+#plot(k_3,half_autocorrelation);
 
 ```
 
