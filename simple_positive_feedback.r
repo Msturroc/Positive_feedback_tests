@@ -4,7 +4,7 @@ output_GFP = matrix(0,nrow=(maxtime/timestep)+1,ncol=numberofrealisations);
 
 for (realisation in seq(1,numberofrealisations,by=1)){
 #print(realisation)
-
+#testing 1 2 3
 GFP= 0;
 a = rep(0,3);
 a[1] = k_1;
