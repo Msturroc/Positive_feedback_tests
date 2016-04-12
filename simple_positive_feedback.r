@@ -3,13 +3,10 @@ simple_positive_feedback <- function(k_1,k_2,k_3,maxtime,timestep,numberofrealis
 output_GFP = matrix(0,nrow=(maxtime/timestep)+1,ncol=numberofrealisations);
 
 for (realisation in seq(1,numberofrealisations,by=1)){
-<<<<<<< HEAD
+
 #print(realisation)
 GFP= round(k_1/(k_2-k_3));
-=======
 
-GFP= 0;
->>>>>>> master
 a = rep(0,3);
 a[1] = k_1;
 a[2] = k_2*GFP;
