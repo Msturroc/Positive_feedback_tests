@@ -1,4 +1,4 @@
-simple_positive_feedback <- function(k_1,k_2,k_3,maxtime,timestep,numberofrealisations,initial_condition){
+simple_positive_feedback <- function(k_1,k_2,k_3,maxtime,timestep,numberofrealisations,initial_condition=0){
 
 output_GFP = matrix(0,nrow=(maxtime/timestep)+1,ncol=numberofrealisations);
 
