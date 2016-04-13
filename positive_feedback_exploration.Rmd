@@ -3,6 +3,7 @@ title: "Positive feedback measures"
 author: "Marc"
 date: "10 April 2016"
 output:
+  html_document: default
   pdf_document:
     highlight: tango
 ---
@@ -88,15 +89,15 @@ RowVar <- function(x) {
 ```
 We can now examine the examine the relationship between the positive feedback strength and Fano Factor. Probably need more realisations to get a decent estimate of the Fano Factor.
 ```{r plot 4}
-numberofrealisations = 20;
+numberofrealisations = 1;
 count = 0;
 F <- rep(0, 6);
 for (k_3 in seq(0,0.005,by=0.001)){
   count = count + 1;
-  output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,numberofrealisations);
-  temp_mean_A = rowMeans(output);
-  temp_var_A = RowVar(output);
-  F[count] = temp_var_A[length(temp_var_A)]/temp_mean_A[length(temp_mean_A)];
+  output = simple_positive_feedback(k_1,k_2,k_3,maxtime*10000,timestep,numberofrealisations,round(k_1/(k_2-k_3)));
+  temp_mean_A = mean(output);
+  temp_var_A = var(output);
+  F[count] = temp_var_A/temp_mean_A;
 }
 k_3 = seq(0,0.005,by=0.001);
 plot(k_3,F);
@@ -171,18 +172,12 @@ library(entropy);
 
 We can see how the entropy varies with $k_3$ by doing the following:
 ```{r plot 7}
-numberofrealisations = 100;
 entropy_A <- rep(0,6);
 count1 = 0;
 for (k_3 in seq(0,0.005,by=0.001)){
   count1 = count1 + 1;
-  A_end <- rep(0, numberofrealisations);
-  for (count2 in seq(1,numberofrealisations,by=1)){
-  output = simple_positive_feedback(1,0.01,k_3,1000,0.1,1);
-  temp_A = output[length(output)]; #use final time series value
-  A_end[count2] = temp_A;
-  }
-  entropy_A[count1] = entropy(A_end);
+  output = simple_positive_feedback(1,0.01,k_3,10000,0.1,1,round(k_1/(k_2-k_3)));
+  entropy_A[count1] = entropy(output);
 }
 k_3 = seq(0,0.005,by=0.001);
 plot(k_3,entropy_A);
