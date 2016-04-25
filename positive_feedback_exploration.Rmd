@@ -3,6 +3,7 @@ title: "Positive feedback measures"
 author: "Marc"
 date: "10 April 2016"
 output:
+  html_document: default
   pdf_document:
     highlight: tango
 ---
@@ -30,7 +31,7 @@ k_3 = 0.001;
 maxtime = 1000;
 timestep = 0.1;
 numberofrealisations = 100;
-output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,numberofrealisations);
+output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,numberofrealisations,0);
 ```
 
 We can also make a heatmap plot (you may have to install the "fields" package for this --  install.packages("fields")):
@@ -61,14 +62,14 @@ count = 0;
 mu_A <- rep(0, 6);
 for (k_3 in seq(0,0.005,by=0.001)){
   count = count + 1;
-  output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,numberofrealisations);
+  output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,numberofrealisations,round(k_1/(k_2-k_3)));
   temp_mean_A = rowMeans(output);
   mu_A[count] = temp_mean_A[length(temp_mean_A)];
   if (count==1){plot(seq(0,maxtime,timestep),t(rowMeans(output)),type='l',col=count)}
 {lines(seq(0,maxtime,timestep),t(rowMeans(output)),type='l',col=count)}
   }
 k_3 = seq(0,0.005,by=0.001);
-#plot(k_3,mu_A);
+plot(k_3,mu_A);
 
 ```
 
@@ -88,12 +89,12 @@ RowVar <- function(x) {
 ```
 We can now examine the examine the relationship between the positive feedback strength and Fano Factor. Probably need more realisations to get a decent estimate of the Fano Factor.
 ```{r plot 4}
-numberofrealisations = 20;
+numberofrealisations = 1000;
 count = 0;
 F <- rep(0, 6);
 for (k_3 in seq(0,0.005,by=0.001)){
   count = count + 1;
-  output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,numberofrealisations);
+  output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,numberofrealisations,round(k_1/(k_2-k_3)));
   temp_mean_A = rowMeans(output);
   temp_var_A = RowVar(output);
   F[count] = temp_var_A[length(temp_var_A)]/temp_mean_A[length(temp_mean_A)];
@@ -109,7 +110,7 @@ $$\hat{R}(k)=\frac{1}{(n-k) \sigma^2} \sum_{t=1}^{n-k} (X_t-\mu)(X_{t+k}-\mu)$$
 
 We can plot an example autocorrelation for a single trajectory of the model and plot it.
 ```{r plot 5}
-output = simple_positive_feedback(1,0.01,0.001,1000,0.1,1);
+output = simple_positive_feedback(1,0.01,0.001,1000,0.1,1,round(1/(0.01-0.001)));
   autocorr = acf(output,lag.max = 1000,plot = FALSE)
 test <- min(abs(autocorr$acf-0.5))
 half_autocorr = which(abs(autocorr$acf-0.5) == test)
@@ -130,7 +131,7 @@ for (k_3 in seq(0,0.005,by=0.001)){
   count1 = count1 + 1;
   autocorr <- matrix(0,1,ncol=maxlag+1);
   for (count2 in seq(1,numberofrealisations,by=1)){
-  output = simple_positive_feedback(1,0.01,k_3,1000,0.1,1);
+  output = simple_positive_feedback(1,0.01,k_3,1000,0.1,1,round(k_1/(k_2-k_3)));
   autocorr1 = acf(output,lag.max = maxlag,plot = FALSE);
   test <- min(abs(autocorr1$acf-0.5))
   autocorr=rbind(autocorr,as.vector(autocorr1$acf))
@@ -147,7 +148,39 @@ lines(seq(0,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
 }
 k_3 = seq(0,0.005,by=0.001);
 half_autocorrelation = rowMeans(half_autocorr)
-#plot(k_3,half_autocorrelation);
+plot(k_3,half_autocorrelation);
+
+```
+We can compare this with the half autocorrelation of $k_1$ (keeping $k_3 =0$)
+
+```{r plot 6e}
+warningnumberofrealisations = 10;
+maxlag=5000;
+count1 = 0;
+half_autocorr <- matrix(0,nrow=6,ncol=numberofrealisations);
+
+for (k_1 in seq(1,6,by=1)){
+  count1 = count1 + 1;
+  autocorr <- matrix(0,1,ncol=maxlag+1);
+  for (count2 in seq(1,numberofrealisations,by=1)){
+  output = simple_positive_feedback(k_1,0.01,0,1000,0.1,1,round(k_1/(0.01)));
+  autocorr1 = acf(output,lag.max = maxlag,plot = FALSE);
+  test <- min(abs(autocorr1$acf-0.5))
+  autocorr=rbind(autocorr,as.vector(autocorr1$acf))
+  half_autocorr[count1,count2] = which(abs(autocorr1$acf-0.5) == test);
+ 
+  }
+  if (count1==1){
+  plot(seq(0,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
+  }
+  else{
+lines(seq(0,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
+}
+#lines(lag,autocorrelation,col="green")
+}
+k_1 = seq(1,6,by=1);
+half_autocorrelation = rowMeans(half_autocorr)
+plot(k_1,half_autocorrelation);
 
 ```
 
@@ -178,7 +211,7 @@ for (k_3 in seq(0,0.005,by=0.001)){
   count1 = count1 + 1;
   A_end <- rep(0, numberofrealisations);
   for (count2 in seq(1,numberofrealisations,by=1)){
-  output = simple_positive_feedback(1,0.01,k_3,1000,0.1,1);
+  output = simple_positive_feedback(1,0.01,k_3,1000,0.1,1,0);
   temp_A = output[length(output)]; #use final time series value
   A_end[count2] = temp_A;
   }
