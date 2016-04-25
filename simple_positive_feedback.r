@@ -49,6 +49,7 @@ a[2] = a[2] - k_2;
 a[3] = a[3] - k_3;
 asum = asum - k_2 - k_3;
 }
+#positive feedback
 else if (j == 3){
 GFP = GFP + 1;
 
