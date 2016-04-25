@@ -80,12 +80,10 @@ count = 0;
 mu_A <- rep(0, 6);
 for (k_3 in seq(0.005,0,by=-0.001)){
   count = count + 1;
-  output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,numberofrealisations,round(k_1/(k_2-k_3)));
+  output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,numberofrealisations,round(runif(1,min=.3,max=.5)*1000));
   temp_mean_A = rowMeans(output);
   mu_A[count] = temp_mean_A[length(temp_mean_A)];
-  if (count==1){plot(seq(0,maxtime,timestep),t(rowMeans(output)),type='l',col=count)}
-{lines(seq(0,maxtime,timestep),t(rowMeans(output)),type='l',col=count)}
-  }
+} 
 k_3 = seq(0,0.005,by=0.001);
 plot(k_3,mu_A);
 
@@ -156,7 +154,7 @@ for (k_3 in seq(0.009,0,by=-0.003)){
   count1 = count1 + 1;
   autocorr <- matrix(0,1,ncol=maxlag+1);
   for (count2 in seq(1,numberofrealisations,by=1)){
-  output = simple_positive_feedback(1,0.01,k_3,1000,0.1,1,round(k_1/(k_2-k_3)));
+  output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,1,round(runif(1,min=.3,max=.5)*1000));
   autocorr1 = acf(output,lag.max = maxlag,plot = FALSE);
   test <- min(abs(autocorr1$acf-0.5))
   autocorr=rbind(autocorr,as.vector(autocorr1$acf))
