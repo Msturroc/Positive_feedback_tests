@@ -1,0 +1,214 @@
+---
+title: "Positive feedback measures"
+author: "Marc"
+date: "10 April 2016"
+output:
+  html_document: default
+  pdf_document:
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Positive feedback model
+
+The purpose of this document is to present and explore different measures of positive feedback. For this, we consider a model governed by the following three reactions:
+
+$$\emptyset \underset{k_2}{\stackrel{k_1}{\rightleftharpoons}} A \underset{k_3}{\longrightarrow} A + A$$
+
+where $k_1$ is the birth rate, $k_2$ is the decay rate and $k_3$ is the positive feedback strength. We want to study stochastic realisations of this model using the stochastic simulation algorithm which is implemented in the function "simple_positive_feedback.r", so first we must source the function.
+```{r function}
+source('simple_positive_feedback.r')
+```
+
+Let's define parameters, run 100 trajectories of the model and obtain the output:
+```{r parameters}
+k_1 = 1
+k_2 = 0.01;
+maxtime = 1e5;
+timestep = 0.1;
+numberofrealisations = 1;
+count = 0;
+data <- matrix(0,nrow=round(maxtime/timestep)+1,ncol=1);
+for (k_3 in seq(0,0.005,by=0.001)){
+  count = count + 1;
+  output = simple_positive_feedback(k_1,k_2,k_3,maxtime,timestep,numberofrealisations,round(k_1/(k_2-k_3)));
+  data=cbind(data,output)}
+data <- subset( data, select = -1 )
+```
+
+We can also make a heatmap plot (you may have to install the "fields" package for this --  install.packages("fields")):
+
+```{r library, echo=FALSE,include=FALSE}
+library(fields);
+```
+```{r plot}
+k_3 = seq(0,0.005,by=0.001)
+time = seq(0,maxtime,by=timestep);
+image.plot(time,k_3,data);
+```
+
+Now that we have a stochastic model with positive feedback strength as a parameter, we can try to find measures that are suitable for identifying positive feedbacks.
+
+## Mean
+
+The first and most obvious measure is the mean. The mean value of $A$ should increase with the positive feedback strength, $k_3$. To study this, first we can plot the mean time series for a single value of $k_3$:
+
+```{r plot 2}
+time = seq(0,maxtime,by=timestep);
+mu_A = colMeans(data);
+k_3 = seq(0,0.005,by=0.001);
+plot(k_3,mu_A);
+```
+
+We can see that the mean value increases with positive feedback strength. The next measure we will inspect is the noise of $A$, specifically the Fano Factor. 
+
+## Fano Factor
+The Fano Factor (F) of $A$ is defined as
+
+$$F =\frac{\sigma^2}{\mu}$$
+
+where $\sigma^2$ is the variance of $A$. To compute this, we need to define the variance, which can be done using the following function:
+
+```{r var 4}
+RowVar <- function(x) {
+  rowSums((x - rowMeans(x))^2)/(dim(x)[2] - 1)
+}
+```
+We can now examine the examine the relationship between the positive feedback strength and Fano Factor. Probably need more realisations to get a decent estimate of the Fano Factor.
+```{r plot 4}
+library(fields);
+lts = maxtime/timestep;
+step = 1000;
+count = 0;
+count2 = 0;
+F <- matrix(0,nrow=6,ncol=round(lts/step));
+for (a in seq(1,lts,by=step)){
+  count2 = count2 + 1;
+for (k_3 in seq(0,0.005,by=0.001)){
+  count = count + 1;
+  output = data[1:a,count]
+  temp_mean_A = mean(output)
+  temp_var_A = var(output)
+  F[count,count2] = temp_var_A/temp_mean_A;
+}
+  count = 0;
+  }
+k_3 = seq(0,0.005,by=0.001);
+a = seq(1,lts,by=step)
+image.plot(k_3,a,F)
+```
+
+## Autocorrelation
+For a discrete process with known mean and variance for which we observe n observations $\{X_1,\,X_2,\,\ldots,\,X_n\}$, an estimate of the autocorrelation may be obtained as
+
+$$\hat{R}(k)=\frac{1}{(n-k) \sigma^2} \sum_{t=1}^{n-k} (X_t-\mu)(X_{t+k}-\mu)$$
+
+We can plot an example autocorrelation for a single trajectory of the model and plot it.
+```{r plot 5}
+output = data[,1];
+  autocorr = acf(output,lag.max = 1000,plot = FALSE)
+test <- min(abs(autocorr$acf-0.5))
+half_autocorr = which(abs(autocorr$acf-0.5) == test)
+lag = autocorr$lag;
+autocorrelation = autocorr$acf;
+plot(lag,autocorrelation,main=paste("Half autocorrelation = ", half_autocorr))
+```
+
+Now we can examine how the half autocorrelation (which is displayed in the title of the previous plot) varies with $k_3$.
+
+```{r plot 6}
+maxlag=10000;
+count1 = 0;
+half_autocorr <- matrix(0,nrow=6,ncol=numberofrealisations);
+
+for (k_3 in seq(0,0.005,by=0.001)){
+   count1 = count1 + 1;
+   autocorr <- matrix(0,1,ncol=maxlag+1);
+   for (count2 in seq(1,numberofrealisations,by=1)){
+   output = data[,count1]
+   autocorr1 = acf(output,lag.max = maxlag,plot = FALSE);
+   test <- min(abs(autocorr1$acf-0.5))
+   autocorr=rbind(autocorr,as.vector(autocorr1$acf))
+   half_autocorr[count1,count2] = which(abs(autocorr1$acf-0.5) == test);
+
+   }
+   if (count1==1){
+   plot(seq(0,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
+   }
+   else{
+ lines(seq(0,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
+ }
+ #lines(lag,autocorrelation,col="green")
+ }
+ k_3 = seq(0,0.005,by=0.001);
+ half_autocorrelation = rowMeans(half_autocorr)
+ plot(k_3,half_autocorrelation);
+ 
+ ```
+ We can compare this with the half autocorrelation of $k_1$ (keeping $k_3 =0$)
+
+# ```{r plot 6e}
+# warningnumberofrealisations = 10;
+# maxlag=5000;
+# count1 = 0;
+# half_autocorr <- matrix(0,nrow=6,ncol=numberofrealisations);
+# 
+# for (k_1 in seq(1,6,by=1)){
+#   count1 = count1 + 1;
+#   autocorr <- matrix(0,1,ncol=maxlag+1);
+#   for (count2 in seq(1,numberofrealisations,by=1)){
+#   output = simple_positive_feedback(k_1,0.01,0,1000,0.1,1,round(k_1/(0.01)));
+#   autocorr1 = acf(output,lag.max = maxlag,plot = FALSE);
+#   test <- min(abs(autocorr1$acf-0.5))
+#   autocorr=rbind(autocorr,as.vector(autocorr1$acf))
+#   half_autocorr[count1,count2] = which(abs(autocorr1$acf-0.5) == test);
+#  
+#   }
+#   if (count1==1){
+#   plot(seq(0,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
+#   }
+#   else{
+# lines(seq(0,maxlag,by=1),colMeans(autocorr),type="l",col=count1)
+# }
+# #lines(lag,autocorrelation,col="green")
+# }
+# k_1 = seq(1,6,by=1);
+# half_autocorrelation = rowMeans(half_autocorr)
+# plot(k_1,half_autocorrelation);
+# 
+# ```
+
+## Entropy
+
+Named after Boltzmann's $H$-theorem, Shannon defined the entropy $H$ (Greek letter $H$) of a discrete random variable X with possible values ${x_1, …, x_n}$ and probability mass function $P(X)$ as:
+
+$$H(X) = \mathrm{E}[\mathrm{I}(X)] = \mathrm{E}[-\ln(\mathrm{P}(X))]$$.
+
+Here $E$ is the expected value operator, and $I$ is the information content of $X$. $I(X)$ is itself a random variable.
+
+The entropy can explicitly be written as
+
+$$H(X) = \sum_{i=1}^n {\mathrm{P}(x_i)\,\mathrm{I}(x_i)} = -\sum_{i=1}^n {\mathrm{P}(x_i) \log_b \mathrm{P}(x_i)},$$
+
+where $b$ is the base of the logarithm used. Common values of $b$ are $2$, Euler's number $e$, and $10$, and the unit of entropy is shannon for $b = 2$, nat for $b = e$, and hartley for $b = 10$. When $b = 2$, the units of entropy are also commonly referred to as bits.
+
+```{r library 2, echo=FALSE,include=FALSE}
+library(entropy);
+```
+
+We can see how the entropy varies with $k_3$ by doing the following:
+```{r plot 7}
+numberofrealisations = 100;
+entropy_A <- rep(0,6);
+count1 = 0;
+for (k_3 in seq(0,0.005,by=0.001)){
+  count1 = count1 + 1;
+  entropy_A[count1] = entropy(data[,count1]);
+}
+k_3 = seq(0,0.005,by=0.001);
+plot(k_3,entropy_A);
+```
+Shannon entropy appears to remain constant, making it useless for positive feedback detection.
